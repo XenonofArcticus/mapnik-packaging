@@ -22,6 +22,7 @@ make -j$JOBS
 make install
 cd ${PACKAGES}
 
+
 # libtool - for libltdl
 tar xvf libtool-${LIBTOOL_VERSION}.tar.gz
 cd libtool-${LIBTOOL_VERSION}
@@ -42,7 +43,6 @@ cd icu/source
 --disable-samples \
 --enable-static \
 --disable-shared \
---with-library-bits=64 \
 --with-data-packaging=archive
 
 make -j${JOBS}
@@ -60,6 +60,7 @@ cd boost_${BOOST_VERSION2}
 # patch python build to ensure we do not link boost_python to python
 patch tools/build/v2/tools/python.jam < ${ROOTDIR}/patches/python_jam.diff
 ./bootstrap.sh
+echo 'using clang-darwin ;' > user-config.jam
 
 if [[ -d /Applications/Xcode.app/Contents/Developer ]]; then
     patch tools/build/v2/tools/darwin.jam ../../patches/boost_sdk.diff
@@ -67,27 +68,32 @@ fi
 
 # static libs
 ./b2 tools/bcp \
+  --ignore-site-config --user-config=user-config.jam \
   --prefix=${BUILD} -j${JOBS} ${B2_VERBOSE} \
   --with-thread \
   --with-filesystem \
   --disable-filesystem2 \
   --with-program_options --with-system --with-chrono \
-  toolset=darwin \
-  macosx-version=10.6 \
-  address-model=64 \
+  toolset=clang \
+  macosx-version=iphonesim-5.1 \
+  address-model=32 \
   architecture=x86 \
   link=static \
   variant=release \
   stage install
 
 # regex separately
+# problems with icu configure check?
+# cat bin.v2/config.log
+rm -rf  bin.v2/libs/regex/
 ./b2 --prefix=${BUILD} -j${JOBS} ${B2_VERBOSE} \
-  linkflags="$LDFLAGS -L$BUILD/lib -licudata -licuuc" \
+  --ignore-site-config --user-config=user-config.jam \
+  linkflags="$LDFLAGS -L$BUILD/lib -licuuc -licui18n -licudata" \
   cxxflags="$CXXFLAGS -DU_STATIC_IMPLEMENTATION=1" \
   --with-regex \
-  toolset=darwin \
-  macosx-version=10.6 \
-  address-model=64 \
+  toolset=clang \
+  macosx-version=iphonesim-5.1 \
+  address-model=32 \
   architecture=x86 \
   link=static \
   variant=release \
@@ -106,7 +112,7 @@ fi
   --with-python \
   toolset=darwin \
   macosx-version=10.6 \
-  address-model=32_64 \
+  address-model=32 \
   architecture=x86 \
   link=shared \
   variant=release \
@@ -123,17 +129,17 @@ fi
 
 echo '*building boost python versions*'
 
-cd ${PACKAGES}/boost_${BOOST_VERSION2}
-python ${ROOTDIR}/scripts/build_boost_pythons.py 2.6 64
-mv stage/lib/libboost_python.a stage/lib/libboost_python-2.6.a
-cp stage/lib/libboost_python-2.6.a ${BUILD}/lib/libboost_python-2.6.a
+#cd ${PACKAGES}/boost_${BOOST_VERSION2}
+#python ${ROOTDIR}/scripts/build_boost_pythons.py 2.6 64
+#mv stage/lib/libboost_python.a stage/lib/libboost_python-2.6.a
+#cp stage/lib/libboost_python-2.6.a ${BUILD}/lib/libboost_python-2.6.a
 #mv stage/lib/libboost_python.dylib stage/lib/libboost_python-2.6.dylib
 #cp stage/lib/libboost_python-2.6.dylib ${BUILD}/lib/libboost_python-2.6.dylib
 #install_name_tool -id @loader_path/libboost_python-2.6.dylib ${BUILD}/lib/libboost_python-2.6.dylib
 
-python ${ROOTDIR}/scripts/build_boost_pythons.py 2.7 64
-mv stage/lib/libboost_python.a stage/lib/libboost_python-2.7.a
-cp stage/lib/libboost_python-2.7.a ${BUILD}/lib/libboost_python-2.7.a
+#python ${ROOTDIR}/scripts/build_boost_pythons.py 2.7 64
+#mv stage/lib/libboost_python.a stage/lib/libboost_python-2.7.a
+#cp stage/lib/libboost_python-2.7.a ${BUILD}/lib/libboost_python-2.7.a
 
 #mv stage/lib/libboost_python.dylib stage/lib/libboost_python-2.7.dylib
 #cp stage/lib/libboost_python27.dylib ${BUILD}/lib/libboost_python-2.7.dylib
@@ -147,10 +153,11 @@ cp stage/lib/libboost_python-2.7.a ${BUILD}/lib/libboost_python-2.7.a
 cd ${PACKAGES}
 
 # freetype
+# export CFLAGS="$CFLAGS -pipe -mdynamic-no-pic -Wno-trigraphs -fpascal-strings -O2 -Wreturn-type -Wunused-variable -fmessage-length=0 -fvisibility=hidden"
 echo '*building freetype*'
 tar xf freetype-${FREETYPE_VERSION}.tar.bz2
 cd freetype-${FREETYPE_VERSION}
-./configure --prefix=${BUILD} --enable-static --disable-shared --disable-dependency-tracking
+./configure --prefix=${BUILD} --enable-static --disable-shared
 make -j${JOBS}
 make install
 cd ${PACKAGES}

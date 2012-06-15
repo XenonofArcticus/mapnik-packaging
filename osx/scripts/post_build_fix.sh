@@ -7,7 +7,9 @@ mkdir -p ${MAPNIK_INSTALL}/share/icu
 # TODO - replace with actual icu version
 cp ${BUILD}/share/icu/*/icudt*.dat ${MAPNIK_INSTALL}/share/icu/
 cp -r ${BUILD}/share/proj ${MAPNIK_INSTALL}/share/
-cp -r ${BUILD}/share/gdal ${MAPNIK_INSTALL}/share/
+#cp -r ${BUILD}/share/gdal ${MAPNIK_INSTALL}/share/
+
+install_name_tool -id ${MAPNIK_INSTALL}/lib/libmapnik.dylib ${MAPNIK_INSTALL}/lib/libmapnik.dylib
 
 
 # py2cairo
@@ -25,7 +27,8 @@ do
 done
 
 # fixup c++ programs
-install_name_tool -change libmapnik.dylib @loader_path/../lib/libmapnik.dylib ${MAPNIK_INSTALL}/bin/pgsql2sqlite
+install_name_tool -change libmapnik.dylib ${MAPNIK_INSTALL}/lib/libmapnik.dylib ${MAPNIK_SOURCE}/demo/c++/rundemo
+#install_name_tool -change libmapnik.dylib @loader_path/../lib/libmapnik.dylib ${MAPNIK_INSTALL}/bin/pgsql2sqlite
 #install_name_tool -change libmapnik.dylib @loader_path/../lib/libmapnik.dylib ${MAPNIK_INSTALL}/bin/svg2png
 for i in $(ls ${MAPNIK_SOURCE}/tests/cpp_tests/*-bin);
 do install_name_tool -change libmapnik.dylib ${MAPNIK_INSTALL}/lib/libmapnik.dylib $i;
