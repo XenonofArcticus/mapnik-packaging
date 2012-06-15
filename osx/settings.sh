@@ -1,16 +1,24 @@
 
 export ROOTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# available libs:
+# /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.1.sdk/usr/lib/
+# http://stackoverflow.com/questions/8126233/how-to-build-icu-so-i-can-use-it-in-an-iphone-app
+
 XCODE_PREFIX=$( xcode-select -print-path )
+# set this up with:
+# sudo xcode-select -switch /Applications/Xcode.app/Contents/Developer
+# man xcrun for more info
 #if [[ $XCODE_PREFIX == "/Developer" ]]; then
 if [[ -d /Applications/Xcode.app/Contents/Developer ]]; then
     export XCODE_PREFIX="/Applications/Xcode.app/Contents/Developer"
     export CORE_CXX="/usr/bin/clang++"
     export CORE_CC="/usr/bin/clang"
+    export AR="${XCODE_PREFIX}/Platforms/iPhoneSimulator.platform/Developer/usr/bin/ar"
     # /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer
-    export SDK_PATH="${XCODE_PREFIX}/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk" ## >= 4.3.1 from MAC
+    export SDK_PATH="${XCODE_PREFIX}/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.1.sdk" ## >= 4.3.1 from MAC
     # http://adcdownload.apple.com/Developer_Tools/auxiliary_tools_for_xcode__february_2012/auxiliary_tools_for_xcode.dmg
-    export PATH=/Applications/PackageMaker.app/Contents/MacOS/:$PATH
+    export PATH=${XCODE_PREFIX}/Platforms/iPhoneSimulator.platform/Developer/usr/bin:/Applications/PackageMaker.app/Contents/MacOS/:$PATH
 else
     export SDK_PATH="${XCODE_PREFIX}/SDKs/MacOSX10.6.sdk" ## Xcode 4.2
     #export PATH="/Developer/usr/bin:${PATH}"
@@ -40,18 +48,18 @@ if [[ $JOBS > 4 ]]; then
     export JOBS=$(expr $JOBS - 2)
 fi
 # -arch i386 breaks icu Collator::createInstance
-export ARCH_FLAGS="-arch x86_64"
+export ARCH_FLAGS="-arch i386"
 #export ARCH_FLAGS="-arch x86_64 -arch i386"
 export ARCHFLAGS=${ARCH_FLAGS}
 export CORE_CPPFLAGS=""
-export CORE_CFLAGS="-O${OPTIMIZATION} ${ARCH_FLAGS} -D_FILE_OFFSET_BITS=64"
+export CORE_CFLAGS="-O${OPTIMIZATION} ${ARCH_FLAGS} -Wc++0x-extensions"
 export CORE_CXXFLAGS=${CORE_CFLAGS}
 export CORE_LDFLAGS="-O${OPTIMIZATION} ${ARCH_FLAGS} -Wl,-search_paths_first -headerpad_max_install_names"
 
 # breaks distutils
 #export MACOSX_DEPLOYMENT_TARGET=10.6
-export OSX_SDK_CFLAGS="-mmacosx-version-min=10.6 -isysroot ${SDK_PATH}"
-export OSX_SDK_LDFLAGS="-mmacosx-version-min=10.6 -isysroot ${SDK_PATH}"
+export OSX_SDK_CFLAGS="-miphoneos-version-min=4.3 -isysroot ${SDK_PATH}"
+export OSX_SDK_LDFLAGS="-miphoneos-version-min=4.3 -isysroot ${SDK_PATH}"
 #export OSX_SDK_LDFLAGS="-mmacosx-version-min=10.6 -Wl,-syslibroot,${SDK_PATH}"
 export CXX=${CORE_CXX}
 export CC=${CORE_CC}
